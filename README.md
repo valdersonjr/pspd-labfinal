@@ -23,16 +23,7 @@ A aplicação implementa uma arquitetura de microserviços que permite:
 
 ## 2. Metodologia
 
-### 2.1 Planejamento Individual
-- **Cronograma:** Desenvolvimento iterativo ao longo de 4 semanas
-- **Metodologia:** Implementação incremental com testes contínuos
-- **Organização:**
-  - Semana 1: Setup do ambiente Kubernetes e containers
-  - Semana 2: Implementação dos engines OpenMP e Spark
-  - Semana 3: Integração com monitoramento e correção de bugs
-  - Semana 4: Testes de performance e documentação
-
-### 2.2 Ferramentas Utilizadas
+### 2.1 Ferramentas Utilizadas
 - **Versionamento:** Git/GitHub
 - **Containerização:** Docker com containerd/nerdctl
 - **Orquestração:** Kubernetes (3 VMs: vm1, vm2, vm3)
@@ -67,7 +58,6 @@ O engine Spark foi implementado usando PySpark com:
 #### Testes Realizados
 - **Configuração:** 1 Master + 1 Worker + 1 Engine
 - **Ambiente:** Kubernetes com 3 VMs (2 cores, 6GB RAM cada)
-- **Resultados:** Conectividade ✅, Processamento ⚠️ (requer restart entre execuções)
 
 ### 3.2 Engine com OpenMP/MPI
 
@@ -77,9 +67,7 @@ O engine Spark foi implementado usando PySpark com:
 - **Algoritmo:** Jogo da Vida otimizado com cálculo de vizinhança paralela
 
 #### Integração
-- **Socket Server:** HTTP server em C com threads
-- **Endpoint:** `/process` via parâmetros GET
-- **Load Balancing:** Round-robin entre OpenMP e Spark
+- **Socket Server:** Server em C com threads
 
 #### Performance
 - **Threads:** 4 threads OpenMP configuráveis via OMP_NUM_THREADS
@@ -105,12 +93,11 @@ Spark Performance:
 
 | Métrica | OpenMP | Spark | Observações |
 |---------|--------|-------|-------------|
-| **Tempo médio** | ~0.041s | ~60.5s | Spark 1500x mais lento |
+| **Tempo médio** | ~0.041s | ~60.5s | Spark mais lento |
 | **Escalabilidade** | Local (4 threads) | Distribuída (multi-node) | Spark teoricamente superior |
 | **Complexidade** | Baixa | Alta | OpenMP mais simples |
 | **Overhead** | Mínimo | Altíssimo (JVM + rede) | Para pequenos datasets |
-| **Confiabilidade** | 100% sucesso | Requer restart | OpenMP mais estável |
-| **Recursos** | 256MB RAM | 1GB+ RAM | Spark 4x mais recursos |
+| **Recursos** | 256MB RAM | 1GB+ RAM | Spark mais recursos |
 
 **Conclusão:** Para o escopo do laboratório, OpenMP demonstra melhor performance e estabilidade, enquanto Spark oferece melhor escalabilidade teórica para aplicações de larga escala real.
 
@@ -142,15 +129,6 @@ readinessProbe:
     port: 8082
 ```
 
-### 4.2 Integração do Kubernetes com a Aplicação
-
-#### Arquitetura de Containers
-- **Socket Server:** 1 pod (entry point da aplicação)
-- **OpenMP Engine:** 2 pods com anti-affinity
-- **Spark Master:** 1 pod (coordenador)
-- **Spark Worker:** 1 pod (executor)
-- **Spark Engine:** 1 pod (processamento)
-
 #### Conectividade entre Serviços
 - **ElasticSearch:** Host externo (192.168.122.1:9200)
 - **Services:** ClusterIP para comunicação interna
@@ -161,9 +139,7 @@ readinessProbe:
 
 #### Teste de Auto-recovery
 ```bash
-# Simulação de falha executada
 kubectl delete pod -l app=openmp-engine -n pspd --force
-# Resultado: Kubernetes recriou automaticamente em ~10s
 ```
 
 #### Simulação de Carga
@@ -210,9 +186,6 @@ kubectl delete pod -l app=openmp-engine -n pspd --force
 
 #### Dashboards Criados
 1. **Tempo médio por Engine:** Gráfico de barras comparativo
-2. **Taxa de sucesso:** Pie chart OpenMP vs Spark
-3. **Timeline:** Linha do tempo das execuções
-4. **Distribuição de carga:** Métricas de concorrência
 
 #### Insights Obtidos
 - **OpenMP:** Extremamente rápido e consistente (0.030-0.056s)
@@ -228,7 +201,7 @@ kubectl delete pod -l app=openmp-engine -n pspd --force
 ### 6.1 Resultados Obtidos
 - ✅ **Arquitetura distribuída** implementada com Kubernetes
 - ✅ **OpenMP engine** funcionando com alta performance
-- ✅ **Spark engine** implementado (com limitações de estabilidade)
+- ✅ **Spark engine** implementado, porém minhas máquinas com baixo recurso
 - ✅ **Coleta de métricas** automatizada
 - ✅ **Elasticidade** demonstrada via auto-recovery
 - ✅ **Visualização** profissional via Kibana
@@ -251,13 +224,6 @@ kubectl delete pod -l app=openmp-engine -n pspd --force
 - **Vantagens:** Escalabilidade, distribuição, tolerância a falhas
 - **Uso ideal:** Big Data, processamento distribuído real
 
-### 6.4 Melhorias Futuras
-- Implementar Kafka como broker para maior escalabilidade
-- Resolver instabilidade das sessões Spark
-- Horizontal Pod Autoscaler baseado em CPU/memória
-- Testes em cluster com mais recursos
-- Integração com ferramentas de CI/CD
-
 ### 6.5 Comentário Pessoal
 
 **Valderson Pontes da Silva Junior (190020521):**
@@ -275,11 +241,11 @@ kubectl delete pod -l app=openmp-engine -n pspd --force
   - Troubleshooting avançado de problemas de rede e DNS
   - Implementação de stack de monitoramento profissional
   - Análise de trade-offs entre simplicidade e escalabilidade
-- **Desafios superados:**
-  - Problemas de resolução DNS resolvidos com IPs diretos
-  - Instabilidade das sessões Spark contornada com restarts
-  - Limitações de recursos gerenciadas com otimizações
-- **Autoavaliação:** 9/10 - Projeto ambicioso implementado com sucesso, demonstrando domínio das tecnologias solicitadas
+- **Desafios:**
+  - Problemas de resolução DNS
+  - Instabilidade das sessões Spark
+  - Limitações de recursos
+- **Autoavaliação:** 9/10 - Projeto implementado com algumas dificuldades, mas aprendizado das tecnologias e esforço
 
 ---
 
@@ -303,34 +269,3 @@ kubectl delete pod -l app=openmp-engine -n pspd --force
 - `images/socketserver/socketserver_http.c` - Socket server com métricas
 - `images/sparkengine/spark_distributed_server.py` - Engine Spark
 - `images/openmpmpiengine/http_server.c` - Engine OpenMP
-
-### 7.4 Instruções de Execução
-
-#### Pré-requisitos
-```bash
-# Kubernetes cluster com 3 nodes
-# Docker/containerd configurado
-# Registry local: vm1:5000
-```
-
-#### Deploy da aplicação
-```bash
-kubectl apply -f manifests/namespace.yaml
-kubectl apply -f manifests/
-```
-
-#### Testes
-```bash
-cd testes/
-./executar_todos.sh  # Executa todos os testes
-```
-
-#### Monitoramento
-- **Kibana:** http://192.168.122.1:5601
-- **ElasticSearch:** http://192.168.122.1:9200
-
----
-
-**GitHub Repository:** [Link do repositório se disponível]
-
-**Observação:** Todos os arquivos necessários para reprodução estão organizados com instruções de instalação e execução detalhadas.
