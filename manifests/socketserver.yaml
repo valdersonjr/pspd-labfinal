@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socketserver
+  namespace: pspd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: socketserver
+  template:
+    metadata:
+      labels:
+        app: socketserver
+    spec:
+      containers:
+      - name: socketserver
+        image: vm1:5000/socketserver:latest
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: socketserver-service
+  namespace: pspd
+spec:
+  selector:
+    app: socketserver
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  type: NodePort
